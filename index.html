@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RP Shot Model</title>
+<style>
+  :root{
+    --bg:#f4f3ee;
+    --panel:#fffdf8;
+    --panel-2:#f0efe8;
+    --text:#20231f;
+    --muted:#71766e;
+    --line:#dddcd3;
+    --accent:#355b49;
+    --accent-soft:#dfe9e3;
+    --shadow:0 12px 34px rgba(31,38,33,.08);
+    --radius:18px;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    font-family:Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI",
+      "PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    background:var(--bg);
+    color:var(--text);
+  }
+  button,input,textarea{font:inherit}
+  button{cursor:pointer}
+  .wrap{max-width:1120px;margin:0 auto;padding:34px 18px 70px}
+  .topline{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:18px}
+  .eyebrow{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700}
+  h1{font-size:clamp(30px,6vw,54px);line-height:1;margin:7px 0 0;letter-spacing:-.045em}
+  .tag{font-size:13px;color:var(--muted);max-width:390px;text-align:right;line-height:1.5}
+
+  .principle{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:20px;
+    box-shadow:var(--shadow);
+  }
+  .principle-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+  .principle-card{
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:16px;
+    min-height:145px;
+  }
+  .principle-card .num{font-size:12px;color:var(--accent);font-weight:800;letter-spacing:.08em}
+  .principle-card h3{margin:7px 0 8px;font-size:16px}
+  .principle-card p{margin:0;color:#4f554f;font-size:14px;line-height:1.65}
+  .loop{
+    margin-top:14px;border-top:1px solid var(--line);padding-top:14px;
+    display:flex;align-items:center;gap:9px;flex-wrap:wrap;
+    color:#414741;font-size:13px
+  }
+  .pill{background:var(--accent-soft);color:#264536;border-radius:999px;padding:7px 10px;font-weight:700}
+  .arrow{color:#8a8e88}
+
+  section{margin-top:28px}
+  .section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+  .section-head h2{font-size:19px;margin:0;letter-spacing:-.02em}
+  .section-sub{font-size:12px;color:var(--muted)}
+
+  .week-nav{display:flex;align-items:center;gap:8px}
+  .iconbtn,.ghostbtn,.primarybtn{
+    border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:10px;padding:8px 10px
+  }
+  .iconbtn{width:36px;height:36px;padding:0}
+  .ghostbtn:hover,.iconbtn:hover{border-color:#b9bbb4}
+  .primarybtn{background:var(--accent);color:white;border-color:var(--accent)}
+  .week-label{font-size:13px;color:var(--muted);min-width:120px;text-align:center}
+
+  .calendar{
+    display:grid;grid-template-columns:repeat(7,1fr);gap:10px
+  }
+  .day{
+    min-height:132px;background:var(--panel);border:1px solid var(--line);
+    border-radius:15px;padding:13px;text-align:left;position:relative;transition:.15s ease;
+  }
+  .day:hover{transform:translateY(-2px);box-shadow:0 10px 25px rgba(31,38,33,.07)}
+  .day.today{outline:2px solid var(--accent);outline-offset:1px}
+  .day.has-shot{background:#fffefb}
+  .dow{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+  .date{font-size:24px;font-weight:800;letter-spacing:-.03em;margin-top:3px}
+  .paper{font-size:12px;font-weight:700;margin-top:12px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .status{position:absolute;left:13px;right:13px;bottom:11px;display:flex;gap:5px;flex-wrap:wrap}
+  .dotlabel{font-size:10px;color:var(--muted);display:inline-flex;align-items:center;gap:4px}
+  .dot{width:6px;height:6px;border-radius:50%;background:#c8cbc5}
+  .dot.on{background:var(--accent)}
+  .empty{font-size:11px;color:#aaa;margin-top:16px}
+
+  .mechanics{display:grid;gap:10px}
+  details.mechanic{
+    background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden
+  }
+  details.mechanic summary{
+    list-style:none;display:grid;grid-template-columns:150px 1fr auto;align-items:center;gap:14px;
+    padding:14px 16px;cursor:pointer;
+  }
+  details.mechanic summary::-webkit-details-marker{display:none}
+  .mechanic-name{font-size:14px;font-weight:800}
+  .bar{display:flex;gap:5px;align-items:center;flex-wrap:wrap;min-height:12px}
+  .seg{width:18px;height:8px;background:var(--accent);border-radius:3px;opacity:.92}
+  .nonebar{font-size:11px;color:#aaa}
+  .count{font-size:12px;color:var(--muted);white-space:nowrap}
+  .history{border-top:1px solid var(--line);padding:8px 10px 10px;background:#faf9f4}
+  .history-row{
+    width:100%;border:0;background:transparent;padding:9px 8px;border-radius:9px;
+    display:flex;align-items:center;justify-content:space-between;text-align:left;color:var(--text)
+  }
+  .history-row:hover{background:#efeee7}
+  .history-date{font-size:12px;font-weight:700}
+  .history-paper{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:65%}
+  .no-history{font-size:12px;color:#999;padding:10px 8px}
+
+  dialog{
+    width:min(1000px,calc(100vw - 24px));max-height:92vh;border:1px solid var(--line);
+    border-radius:18px;padding:0;box-shadow:0 28px 80px rgba(28,33,29,.28);background:var(--panel)
+  }
+  dialog::backdrop{background:rgba(23,28,24,.42);backdrop-filter:blur(2px)}
+  .modal-head{
+    position:sticky;top:0;z-index:4;background:rgba(255,253,248,.97);backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--line);padding:15px 18px;display:flex;justify-content:space-between;align-items:center;gap:15px
+  }
+  .modal-title{font-weight:850;font-size:16px}
+  .modal-actions{display:flex;gap:8px}
+  .modal-body{padding:18px}
+  .meta-grid{display:grid;grid-template-columns:1fr 2fr;gap:12px;margin-bottom:16px}
+  label{font-size:12px;color:var(--muted);font-weight:700}
+  input[type="text"],input[type="date"],textarea{
+    width:100%;margin-top:6px;border:1px solid var(--line);border-radius:11px;background:white;
+    color:var(--text);padding:10px 11px;outline:none
+  }
+  input:focus,textarea:focus{border-color:#96aa9f;box-shadow:0 0 0 3px rgba(53,91,73,.08)}
+  .versions{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .version-card{border:1px solid var(--line);border-radius:14px;padding:12px;background:#faf9f5}
+  .version-title{font-size:12px;font-weight:850;letter-spacing:.03em;margin-bottom:6px}
+  .version-card textarea{min-height:340px;resize:vertical;line-height:1.55;font-size:13px}
+  .adjust-box{margin-top:16px;border:1px solid var(--line);border-radius:14px;padding:14px}
+  .adjust-head{display:flex;justify-content:space-between;gap:12px;align-items:start}
+  .adjust-title{font-size:13px;font-weight:850}
+  .adjust-note{font-size:11px;color:var(--muted);max-width:520px;line-height:1.5}
+  .checks{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .check{
+    border:1px solid var(--line);border-radius:999px;padding:7px 10px;background:#fff;
+    display:inline-flex;align-items:center;gap:7px;font-size:12px;color:#4f544f
+  }
+  .check input{accent-color:var(--accent)}
+  .check.disabled{opacity:.45}
+  .footnote{font-size:11px;color:var(--muted);margin-top:9px}
+  .danger{margin-right:auto;border-color:#e0c4c1;color:#8c3f39;background:#fff7f6}
+
+  @media(max-width:800px){
+    .principle-grid{grid-template-columns:1fr}
+    .calendar{grid-template-columns:repeat(2,1fr)}
+    .calendar .day:last-child{grid-column:span 2}
+    .versions{grid-template-columns:1fr}
+    .version-card textarea{min-height:230px}
+    .meta-grid{grid-template-columns:1fr}
+    .topline{align-items:flex-start;flex-direction:column}
+    .tag{text-align:left}
+    details.mechanic summary{grid-template-columns:100px 1fr auto}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topline">
+    <div>
+      <div class="eyebrow">Research Proposal Practice</div>
+      <h1>RP Shot Model</h1>
+    </div>
+    <div class="tag">输出不是一次写对，而是一次次击球、观察、调整，再把调整带到下一球。</div>
+  </div>
+
+  <div class="principle">
+    <div class="principle-grid">
+      <div class="principle-card">
+        <div class="num">01 · SOURCE</div>
+        <h3>来自网球击球的心理模型</h3>
+        <p>先清晰想象球与球拍应该处在什么位置，再真实击球；观察实际动作与理想动作的差异，然后修正下一次击球。</p>
+      </div>
+      <div class="principle-card">
+        <div class="num">02 · PROBLEM</div>
+        <h3>逐渐形成清晰的内心击球画像</h3>
+        <p>对目标动作进行无评判的观察，同时借助参考动作不断校准感知，让“理想的一拍应该是什么样”逐渐从模糊概念变成清晰、可调用的内部画像。</p>
+      </div>
+    </div>
+    <div class="loop">
+      <span class="pill">Paper</span><span class="arrow">→</span>
+      <span class="pill">Original shot</span><span class="arrow">→</span>
+      <span class="pill">Reference</span><span class="arrow">→</span>
+      <span class="pill">Self-adjusted shot</span><span class="arrow">→</span>
+      <span class="pill">Next shot</span>
+    </div>
+  </div>
+
+  <section>
+    <div class="section-head">
+      <div>
+        <h2>Weekly Shots</h2>
+        <div class="section-sub">点开日期查看或继续当天的 Original / Reference / Self-adjusted 版本。</div>
+      </div>
+      <div class="week-nav">
+        <button class="iconbtn" id="prevWeek" aria-label="Previous week">←</button>
+        <div class="week-label" id="weekLabel"></div>
+        <button class="iconbtn" id="nextWeek" aria-label="Next week">→</button>
+      </div>
+    </div>
+    <div class="calendar" id="calendar"></div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <div>
+        <h2>Adjustment Traces</h2>
+        <div class="section-sub">一格 = 一次在真实 shot 中确认发生的调整；它不是分数，也不代表“已经掌握”。</div>
+      </div>
+    </div>
+    <div class="mechanics" id="mechanics"></div>
+  </section>
+</div>
+
+<dialog id="shotDialog">
+  <div class="modal-head">
+    <div class="modal-title" id="dialogTitle">Shot</div>
+    <div class="modal-actions">
+      <button class="ghostbtn danger" id="deleteBtn">Delete</button>
+      <button class="ghostbtn" id="closeBtn">Close</button>
+      <button class="primarybtn" id="saveBtn">Save</button>
+    </div>
+  </div>
+  <div class="modal-body">
+    <div class="meta-grid">
+      <label>Date
+        <input type="date" id="shotDate">
+      </label>
+      <label>Paper / Topic
+        <input type="text" id="shotPaper" placeholder="e.g. ILC3-like → ILC2 in pulmonary fibrosis">
+      </label>
+    </div>
+
+    <div class="versions">
+      <div class="version-card">
+        <div class="version-title">ORIGINAL SHOT</div>
+        <textarea id="original" placeholder="第一次独立输出，先不要修。"></textarea>
+      </div>
+      <div class="version-card">
+        <div class="version-title">REFERENCE</div>
+        <textarea id="reference" placeholder="参考模式 / 反馈 / 优质 RP 的组织方式。"></textarea>
+      </div>
+      <div class="version-card">
+        <div class="version-title">SELF-ADJUSTED SHOT</div>
+        <textarea id="adjusted" placeholder="看过 reference 后，自己重新组织一次。"></textarea>
+      </div>
+    </div>
+
+    <div class="adjust-box">
+      <div class="adjust-head">
+        <div class="adjust-title">Confirmed adjustment</div>
+        <div class="adjust-note">只勾选这一次 self-adjusted shot 中真正发生了有效调整的结构。没有重新击球之前，不记录 bar。</div>
+      </div>
+      <div class="checks" id="checks"></div>
+      <div class="footnote" id="adjustHint">填写 Self-adjusted shot 后才能确认 adjustment。</div>
+    </div>
+  </div>
+</dialog>
+
+<script>
+const STORAGE_KEY = "rp-shot-model-v1";
+const sections = ["Background","Gap","Question","Aims","Experiment logic"];
+let state = loadState();
+let weekAnchor = startOfWeek(new Date());
+let editingOriginalDate = null;
+
+function seedIfNeeded(){
+  if(Object.keys(state.shots).length) return;
+  state.shots["2026-08-18"] = {
+    date:"2026-08-18",
+    paper:"ILC3-like → ILC2 in pulmonary fibrosis",
+    original:`1. Background
+首先在 Ifngr-/-Rag2-/- 小鼠中进行 unsupervised clustering，发现 ILC3-like 和 ILC2 细胞在炎症期明显增加。在 Ifngr-/-Rag2-/-Rorc-/- 小鼠中发现 PF 发生率下降，相比 Ifngr-/-Rag2-/-；随后发现这个模型中 activated ILC2 下降。又做了体内外实验证实 activated ILC2 对 PF 是 indispensable。
+
+2. Gap
+没有探究 ILC3-like 的存在基础，以及 ILC3-like 和 ILC2 之间的介导效应是否直接；如果直接，那么通过什么方式、何种细胞因子进行介导？
+
+3. Question
+怎样的小鼠模型可以激活 ILC3-like？
+ILC3-like 是否直接介导 ILC2 的激活？
+
+4. Aims
+确认 ILC3-like 的关键表达；
+找到稳定在肺部表达 ILC3-like 的小鼠模型；
+证实 ILC3-like 直接介导 ILC2 的激活。
+
+5. Experiment logic
+先查文献寻找已经建立的 ILC3-like 小鼠模型，比对 paper 中 ILC3-like 的特征；用 RNA-seq 数据与可激活 ILC2 的基因数据做 overlap screen，找到可疑基因 / cytokines，再进行 direct mediation validation。`,
+    reference:`Question
+Does the ILC3-like population directly activate pathogenic ILC2s, and if so, through which mediator?
+
+Aim 1
+Determine whether ILC3-like cells directly promote ILC2 activation.
+
+Aim 2
+Identify and validate the mediator responsible for this ILC3-like–ILC2 interaction.
+
+Reference pattern
+• Question：定义最核心的未知。
+• Aim：把大问题拆成可以建立证据的 scientific objectives。
+• Experiment：为每个 Aim 提供具体的模型、perturbation、readout、screen / bypass / rescue。
+• “找小鼠模型”“做 RNA-seq”“筛基因”通常是 enabling / experimental steps，而不自动构成 scientific Aim。`,
+    adjusted:"",
+    adjustments:[]
+  };
+  saveState();
+}
+seedIfNeeded();
+
+function loadState(){
+  try{
+    const s = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    if(s && s.shots) return s;
+  }catch(e){}
+  return {shots:{}};
+}
+function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+
+function startOfWeek(d){
+  const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const day = x.getDay() || 7;
+  x.setDate(x.getDate() - day + 1);
+  x.setHours(0,0,0,0);
+  return x;
+}
+function addDays(d,n){ const x=new Date(d); x.setDate(x.getDate()+n); return x; }
+function fmtDate(d){
+  const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,"0"), day=String(d.getDate()).padStart(2,"0");
+  return `${y}-${m}-${day}`;
+}
+function niceDate(iso){
+  const d = new Date(iso+"T00:00:00");
+  return new Intl.DateTimeFormat("en-US",{month:"short",day:"numeric"}).format(d);
+}
+function sameDate(a,b){ return fmtDate(a)===fmtDate(b); }
+function esc(s=""){
+  return s.replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[m]));
+}
+
+function renderCalendar(){
+  const cal=document.getElementById("calendar");
+  cal.innerHTML="";
+  const end=addDays(weekAnchor,6);
+  document.getElementById("weekLabel").textContent =
+    `${niceDate(fmtDate(weekAnchor))} – ${niceDate(fmtDate(end))}`;
+  const dows=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+  const now = new Date();
+  for(let i=0;i<7;i++){
+    const d=addDays(weekAnchor,i), iso=fmtDate(d), shot=state.shots[iso];
+    const btn=document.createElement("button");
+    btn.className="day"+(shot?" has-shot":"")+(sameDate(d,now)?" today":"");
+    btn.innerHTML=`
+      <div class="dow">${dows[i]}</div>
+      <div class="date">${d.getDate()}</div>
+      ${shot ? `<div class="paper">${esc(shot.paper || "Untitled shot")}</div>
+        <div class="status">
+          <span class="dotlabel"><i class="dot ${shot.original.trim()?"on":""}"></i>O</span>
+          <span class="dotlabel"><i class="dot ${shot.reference.trim()?"on":""}"></i>R</span>
+          <span class="dotlabel"><i class="dot ${shot.adjusted.trim()?"on":""}"></i>A</span>
+        </div>` : `<div class="empty">+ New shot</div>`}`;
+    btn.onclick=()=>openShot(iso);
+    cal.appendChild(btn);
+  }
+}
+
+function renderMechanics(){
+  const box=document.getElementById("mechanics");
+  box.innerHTML="";
+  sections.forEach(sec=>{
+    const hits = Object.values(state.shots)
+      .filter(s=>(s.adjustments||[]).includes(sec))
+      .sort((a,b)=>a.date.localeCompare(b.date));
+    const det=document.createElement("details");
+    det.className="mechanic";
+    const segs=hits.length
+      ? hits.map(()=>`<span class="seg"></span>`).join("")
+      : `<span class="nonebar">No confirmed adjustments yet</span>`;
+    det.innerHTML=`
+      <summary>
+        <div class="mechanic-name">${esc(sec)}</div>
+        <div class="bar">${segs}</div>
+        <div class="count">${hits.length}</div>
+      </summary>
+      <div class="history">
+        ${hits.length ? hits.map(h=>`
+          <button class="history-row" data-date="${h.date}">
+            <span class="history-date">${niceDate(h.date)}</span>
+            <span class="history-paper">${esc(h.paper || "Untitled shot")}</span>
+          </button>`).join("") : `<div class="no-history">这里还没有留下 adjustment trace。</div>`}
+      </div>`;
+    det.querySelectorAll(".history-row").forEach(b=>b.onclick=()=>openShot(b.dataset.date));
+    box.appendChild(det);
+  });
+}
+
+function renderChecks(adjustments=[]){
+  const checks=document.getElementById("checks");
+  const adjustedText=document.getElementById("adjusted").value.trim();
+  checks.innerHTML="";
+  sections.forEach(sec=>{
+    const lab=document.createElement("label");
+    lab.className="check"+(!adjustedText?" disabled":"");
+    const cb=document.createElement("input");
+    cb.type="checkbox";
+    cb.value=sec;
+    cb.checked=adjustments.includes(sec);
+    cb.disabled=!adjustedText;
+    lab.appendChild(cb);
+    lab.appendChild(document.createTextNode(sec));
+    checks.appendChild(lab);
+  });
+  document.getElementById("adjustHint").style.display=adjustedText?"none":"block";
+}
+
+function openShot(iso){
+  editingOriginalDate=iso;
+  const shot=state.shots[iso] || {date:iso,paper:"",original:"",reference:"",adjusted:"",adjustments:[]};
+  document.getElementById("shotDate").value=shot.date;
+  document.getElementById("shotPaper").value=shot.paper||"";
+  document.getElementById("original").value=shot.original||"";
+  document.getElementById("reference").value=shot.reference||"";
+  document.getElementById("adjusted").value=shot.adjusted||"";
+  document.getElementById("dialogTitle").textContent=`Shot · ${niceDate(iso)}`;
+  document.getElementById("deleteBtn").style.visibility=state.shots[iso]?"visible":"hidden";
+  renderChecks(shot.adjustments||[]);
+  document.getElementById("shotDialog").showModal();
+}
+
+document.getElementById("adjusted").addEventListener("input",()=>{
+  const selected=[...document.querySelectorAll("#checks input:checked")].map(x=>x.value);
+  renderChecks(selected);
+});
+document.getElementById("closeBtn").onclick=()=>document.getElementById("shotDialog").close();
+
+document.getElementById("saveBtn").onclick=()=>{
+  const newDate=document.getElementById("shotDate").value;
+  if(!newDate) return;
+  const adjusted=document.getElementById("adjusted").value;
+  const adjustments=adjusted.trim()
+    ? [...document.querySelectorAll("#checks input:checked")].map(x=>x.value)
+    : [];
+  const shot={
+    date:newDate,
+    paper:document.getElementById("shotPaper").value.trim(),
+    original:document.getElementById("original").value,
+    reference:document.getElementById("reference").value,
+    adjusted,
+    adjustments
+  };
+  if(editingOriginalDate && editingOriginalDate!==newDate) delete state.shots[editingOriginalDate];
+  state.shots[newDate]=shot;
+  saveState();
+  document.getElementById("shotDialog").close();
+  weekAnchor=startOfWeek(new Date(newDate+"T00:00:00"));
+  renderAll();
+};
+
+document.getElementById("deleteBtn").onclick=()=>{
+  if(!editingOriginalDate || !state.shots[editingOriginalDate]) return;
+  if(confirm("Delete this shot?")){
+    delete state.shots[editingOriginalDate];
+    saveState();
+    document.getElementById("shotDialog").close();
+    renderAll();
+  }
+};
+
+document.getElementById("prevWeek").onclick=()=>{weekAnchor=addDays(weekAnchor,-7);renderCalendar()};
+document.getElementById("nextWeek").onclick=()=>{weekAnchor=addDays(weekAnchor,7);renderCalendar()};
+
+function renderAll(){renderCalendar();renderMechanics()}
+renderAll();
+</script>
+</body>
+</html>
